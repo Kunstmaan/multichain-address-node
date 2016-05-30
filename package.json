@@ -1,0 +1,23 @@
+{
+  "name": "multichain-address-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/address.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kunstmaan",
+  "license": "MIT",
+  "dependencies": {
+    "bs58": "^3.0.0",
+    "buffer": "^4.6.0",
+    "buffer-compare": "^1.1.1",
+    "buffer-xor": "^2.0.1",
+    "create-hash": "^1.1.2",
+    "randombytes": "^2.0.3",
+    "secp256k1": "^3.1.0"
+  },
+  "devDependencies": {
+    "multichain-node": "^1.7.0"
+  }
+}
