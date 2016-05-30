@@ -4,7 +4,7 @@
   "description": "",
   "main": "lib/address.js",
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha ./test/address.js"
+    "test": "./node_modules/mocha/bin/mocha ./tests/*"
   },
   "author": "Kunstmaan",
   "license": "MIT",

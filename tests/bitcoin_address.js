@@ -9,11 +9,11 @@ var expect = chai.expect;
 
 var addressFactory = require(path.resolve(__dirname, '../lib/address.js'));
 
-describe('When i have a Bitcoin configuration for multichain (address-pubkeyhash-version=00, address-scripthash-version=05, private-key-version=80, address-checksum-value=00000000)', function() {
+var pubKeyHashVersion = '00',
+    privateKeyVersion = '05',
+    checksumValue = '00';
 
-    var pubKeyHashVersion = '00',
-        privateKeyVersion = '05',
-        checksumValue = '00';
+describe('When i have a Bitcoin configuration for multichain (address-pubkeyhash-version=' + pubKeyHashVersion + ', private-key-version=' + privateKeyVersion + ', address-checksum-value=' + checksumValue + ')', function() {
 
     describe('And i generate an address', function() {
 
@@ -21,7 +21,6 @@ describe('When i have a Bitcoin configuration for multichain (address-pubkeyhash
 
         before(function() {
             address = addressFactory.generateNew(pubKeyHashVersion, checksumValue);
-            console.log('address');
         });
 
         it('should have a 32-byte private key', function() {
