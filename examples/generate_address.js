@@ -1,7 +1,7 @@
 'use strict';
 
 var path = require('path'),
-    addressFactory = require(path.resolve(__dirname, '../src/address'));
+    addressFactory = require(path.resolve(__dirname, '../lib/address'));
 
 var pubKeyHashVersion = '00794986',
     checksumValue = 'd4c0cb87',
