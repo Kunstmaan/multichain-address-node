@@ -23,7 +23,6 @@
     "del": "^2.2.0",
     "gulp": "^3.9.1",
     "mocha": "^2.5.3",
-    "multichain-node": "^1.7.0",
     "open": "0.0.5",
     "run-sequence": "^1.2.1",
     "vinyl-source-stream": "^1.1.0"

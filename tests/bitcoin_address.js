@@ -10,8 +10,8 @@ var expect = chai.expect;
 var addressFactory = require(path.resolve(__dirname, '../lib/address.js'));
 
 var pubKeyHashVersion = '00',
-    privateKeyVersion = '05',
-    checksumValue = '00';
+    privateKeyVersion = '80',
+    checksumValue = '00000000';
 
 describe('When i have a Bitcoin configuration for multichain (address-pubkeyhash-version=' + pubKeyHashVersion + ', private-key-version=' + privateKeyVersion + ', address-checksum-value=' + checksumValue + ')', function() {
 
@@ -44,8 +44,8 @@ describe('When i have a Bitcoin configuration for multichain (address-pubkeyhash
                 decodedAddress = new Buffer(bs58.decode(address.address));
             });
 
-            it('should have a length of 22 bytes (1 version byte + 20 byte ripemd160 hash + 1 checksum byte)', function() {
-                expect(decodedAddress).to.have.length(22);
+            it('should have a length of 25 bytes (1 version byte + 20 byte ripemd160 hash + 4 checksum byte)', function() {
+                expect(decodedAddress).to.have.length(25);
             });
 
             it('should start with the public key hash version 00', function() {
@@ -74,13 +74,13 @@ describe('When i have a Bitcoin configuration for multichain (address-pubkeyhash
                     decodedWIF = new Buffer(bs58.decode(addressWIF));
                 });
 
-                it('should start with the private key version 05', function() {
-                    expect(decodedWIF.toString('hex').slice(0, 2)).to.equal('05');
+                it('should start with the private key version 80', function() {
+                    expect(decodedWIF.toString('hex').slice(0, 2)).to.equal('80');
                 });
 
-                it('should include the private key and a 1 byte checksum', function() {
+                it('should include the private key and a 4 bytes checksum', function() {
                     var hexValue = decodedWIF.toString('hex');
-                    expect(hexValue.slice(2, hexValue.length - 2)).to.equal(address.privateKey.toString('hex'));
+                    expect(hexValue.slice(2, hexValue.length - 8)).to.equal(address.privateKey.toString('hex'));
                 });
 
                 describe('When i create the address from the generated WIF', function() {

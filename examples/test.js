@@ -1,7 +1,7 @@
 'use strict';
 
 var path = require('path'),
-    addressFactory = require(path.resolve(__dirname, '../src/address'));
+    addressFactory = require(path.resolve(__dirname, '../lib/address'));
 
 var multichain = require("multichain-node")({
     port: 8000,
@@ -19,6 +19,11 @@ multichain.getBlockchainParams(function(err, params) {
     var addressChecksumValue = params['address-checksum-value'];
     var addressPrivateKeyVersion = params['private-key-version'];
 
+    console.log('pub key hash version', addressPubKeyHashVersion);
+    console.log('priv key version', addressPrivateKeyVersion);
+    console.log('checksum', addressChecksumValue);
+
+    /*
     var address = addressFactory.generateNew(addressPubKeyHashVersion, addressChecksumValue);
     console.log('address', address.toString());
 
@@ -47,5 +52,14 @@ multichain.getBlockchainParams(function(err, params) {
                 console.log('dump', response);
             });
         });
+    });
+    */
+
+    multichain.dumpPrivKey({'address': '1A3d1nw4eCTgaxGnZ6YFZbt4yC7u8TJPPof3dc'}, function(err, response) {
+        console.log('WIF', response);
+
+        var address = addressFactory.fromWIF(response, addressPubKeyHashVersion, addressPrivateKeyVersion, addressChecksumValue);
+
+        console.log(address.toString());
     });
 });
