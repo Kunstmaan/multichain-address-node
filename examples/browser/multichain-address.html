@@ -5,4 +5,12 @@
 <body>
 
 </body>
+
+<script type="text/javascript">
+    var address = multichainAddress.generateNew('00', '00');
+
+    document.querySelector('body').innerHTML = '<h1>' + address.address + '</h1>';
+    document.querySelector('body').innerHTML += '<p><strong>WIF:</strong> ' + address.toWIF('05', '00') + '</p>'
+</script>
+
 </html>
