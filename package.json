@@ -9,6 +9,7 @@
   "author": "Kunstmaan <labs@kunstmaan.be>",
   "license": "MIT",
   "dependencies": {
+    "bluebird": "^3.4.1",
     "bs58": "^3.0.0",
     "buffer": "^4.6.0",
     "buffer-compare": "^1.1.1",
