@@ -7,7 +7,7 @@
 </body>
 
 <script type="text/javascript">
-    var address = multichainAddress.generateNew('00', '00000000');
+    var address = multichain.address.generateNew('00', '00000000');
 
     document.querySelector('body').innerHTML = '<h1>' + address.address + '</h1>';
     document.querySelector('body').innerHTML += '<p><strong>WIF:</strong> ' + address.toWIF('80', '00000000') + '</p>'

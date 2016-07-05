@@ -22,7 +22,7 @@ gulp.task('clean', function(callback) {
 gulp.task('browserify', function() {
 
     return browserify(path.resolve(__dirname, '../../lib/address.js'), {
-            'standalone': 'multichainAddress'
+            'standalone': 'multichain.address'
         })
         .bundle()
         .pipe(source('multichain-address.js'))
