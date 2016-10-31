@@ -7,6 +7,7 @@
 
 - [ ] update readme
 - [ ] better documentation
+- [ ] update to ES6
 - [ ] signing example
 - [ ] add simple lightweight wallet implementation
 - [ ] more tests
