@@ -5,8 +5,8 @@
 
 ## Roadmap
 
-[ ] update readme
-[ ] better documentation
-[ ] signing example
-[ ] add simple lightweight wallet implementation
-[ ] more tests
+- [ ] update readme
+- [ ] better documentation
+- [ ] signing example
+- [ ] add simple lightweight wallet implementation
+- [ ] more tests
