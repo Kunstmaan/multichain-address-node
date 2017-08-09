@@ -1,6 +1,7 @@
 
 var path = require('path'),
     addressFactory = require(path.resolve(__dirname, '../../lib/address')),
+    clone = require('clone'),
     Promise = require('bluebird');
 
 var multichain = require('multichain-node')({
@@ -10,8 +11,8 @@ var multichain = require('multichain-node')({
     pass: 'this-is-insecure-change-it'
 });
 
-var amountToIssue = 100,
-    amountToSend = 1,
+var amountToIssue = 50,
+    amountToSend = 80,
     assetPrefix = 'coinfoo';
 
 // get the params
@@ -88,7 +89,8 @@ Promise.join(blockchainParamsPromise, assetPromise, function(params, assetName) 
             multichain.issue({
                 'address': issuer.address,
                 'asset': {
-                    'name': assetName
+                    'name': assetName,
+                    'open': true
                 },
                 'qty': amountToIssue
             }, function (err, txid) {
@@ -108,173 +110,207 @@ Promise.join(blockchainParamsPromise, assetPromise, function(params, assetName) 
                         return;
                     }
 
-                    // Collect unspent assets
-                    var unspentPromise = function collectUnspent() {
+                    multichain.issueMore({
+                        'address': issuer.address,
+                        'asset': txid,
+                        'qty': amountToIssue
+                    }, function(err, txid) {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
 
-                        return new Promise(function(fulfill, reject) {
-                            multichain.listUnspent({'receivers': [issuer.address]}, function (err, unspent) {
-                                if (err) {
-                                    reject(err);
-                                    return;
-                                }
-
-                                var inputs = [],
-                                    amountCollected = 0,
-                                    utxo;
-
-                                while (amountCollected < amountToSend && unspent.length > 0) {
-                                    utxo = unspent.shift();
-
-                                    if (utxo.assets[0].name === assetName) {
-                                        inputs.push({
-                                            'txid': utxo.txid,
-                                            'vout': utxo.vout,
-                                            'redeemScript': utxo.scriptPubKey,
-                                            'qty': utxo.assets[0].qty
-                                        });
-
-                                        amountCollected += utxo.assets[0].qty;
-                                    }
-                                }
-
-                                if (amountCollected < amountToSend) {
-                                    console.error('Not enough assets available ' + amountCollected + ', ' + amountToSend + ' needed');
-
-                                    setTimeout(function() {
-                                        collectUnspent().then(fulfill, reject);
-                                    }, 1000);
-
-                                    return;
-                                }
-
-                                fulfill(inputs);
-                            });
-                        });
-                    }();
-
-                    unspentPromise.then(function(inputs) {
-                        console.log('Inputs:');
-                        inputs.forEach(function(input) {
-                            console.log(input.qty + ' - ' + input.txid + ' - ' + input.redeemScript);
-                        })
+                        console.log('Issue more transaction:');
+                        console.log('txid: ', txid);
                         console.log('----');
 
-                        var amounts = {},
-                        recipient = addressFactory.generateNew(addressPubKeyHashVersion, addressChecksumValue);
+                        // Collect unspent assets
+                        var unspentPromise = function collectUnspent() {
 
-                        console.log('Recipient:');
-                        console.log('address: ' + recipient.address);
-                        console.log('public key: ' + recipient.publicKey);
-                        console.log('private key: ' + recipient.privateKey);
-                        console.log('compressed: ' + recipient.compressed);
-                        console.log('----');
-
-                        amounts[recipient.address] = {};
-                        amounts[recipient.address][assetName] = amountToSend;
-
-                        var rawTransactionRequest = {
-                            'inputs': inputs,
-                            'amounts': amounts
-                        };
-
-                        // Create the transaction
-                        multichain.createRawTransaction(rawTransactionRequest, function (err, hexString) {
-                            if (err) {
-                                reject(err);
-                                return;
-                            }
-
-                            console.log('Raw transaction hex string:');
-                            console.log(hexString);
-                            console.log('----');
-
-                            var rawChangeRequest = {
-                                'hexstring': hexString,
-                                'address': issuer.address
-                            };
-
-                            // Add change output to transaction
-                            multichain.appendRawChange(rawChangeRequest, function (err, hexString) {
-                                if (err) {
-                                    reject(err);
-                                    return;
-                                }
-
-                                console.log('Raw transaction hex string after appending raw change:');
-                                console.log(hexString);
-                                console.log('----');
-
-                                // Decode the transaction
-                                multichain.decodeRawTransaction({
-                                    'hexstring': hexString
-                                }, function (err, decodedTransaction) {
+                            return new Promise(function(fulfill, reject) {
+                                multichain.listUnspent({'receivers': [issuer.address]}, function (err, unspent) {
                                     if (err) {
                                         reject(err);
                                         return;
                                     }
 
-                                    console.log('Decoded transaction:');
-                                    console.log(JSON.stringify(decodedTransaction));
+                                    var inputs = [],
+                                        amountCollected = 0,
+                                        utxo;
+
+                                    while (amountCollected < amountToSend && unspent.length > 0) {
+                                        utxo = unspent.shift();
+
+                                        if (utxo.assets[0].name === assetName) {
+                                            inputs.push({
+                                                'txid': utxo.txid,
+                                                'vout': utxo.vout,
+                                                'redeemScript': utxo.scriptPubKey,
+                                                'qty': utxo.assets[0].qty
+                                            });
+
+                                            amountCollected += utxo.assets[0].qty;
+                                        }
+                                    }
+
+                                    if (amountCollected < amountToSend) {
+                                        console.error('Not enough assets available ' + amountCollected + ', ' + amountToSend + ' needed');
+
+                                        setTimeout(function() {
+                                            collectUnspent().then(fulfill, reject);
+                                        }, 1000);
+
+                                        return;
+                                    }
+
+                                    fulfill(inputs);
+                                });
+                            });
+                        }();
+
+                        unspentPromise.then(function(inputs) {
+                            console.log('Inputs:');
+                            inputs.forEach(function(input) {
+                                console.log(input.qty + ' - ' + input.txid + ' - ' + input.redeemScript);
+                            })
+                            console.log('----');
+
+                            var amounts = {},
+                            recipient = addressFactory.generateNew(addressPubKeyHashVersion, addressChecksumValue);
+
+                            console.log('Recipient:');
+                            console.log('address: ' + recipient.address);
+                            console.log('public key: ' + recipient.publicKey);
+                            console.log('private key: ' + recipient.privateKey);
+                            console.log('compressed: ' + recipient.compressed);
+                            console.log('----');
+
+                            amounts[recipient.address] = {};
+                            amounts[recipient.address][assetName] = amountToSend;
+
+                            var rawTransactionRequest = {
+                                'inputs': inputs,
+                                'amounts': amounts
+                            };
+
+                            // Create the transaction
+                            multichain.createRawTransaction(rawTransactionRequest, function (err, hexString) {
+                                if (err) {
+                                    reject(err);
+                                    return;
+                                }
+
+                                console.log('Raw transaction hex string:');
+                                console.log(hexString);
+                                console.log('----');
+
+                                var rawChangeRequest = {
+                                    'hexstring': hexString,
+                                    'address': issuer.address
+                                };
+
+                                // Add change output to transaction
+                                multichain.appendRawChange(rawChangeRequest, function (err, hexString) {
+                                    if (err) {
+                                        reject(err);
+                                        return;
+                                    }
+
+                                    console.log('Raw transaction hex string after appending raw change:');
+                                    console.log(hexString);
                                     console.log('----');
 
-                                    var redeemScript = inputs[0].redeemScript; // can't generate this
+                                    // Decode the transaction
+                                    multichain.decodeRawTransaction({
+                                        'hexstring': hexString
+                                    }, function (err, decodedTransaction) {
+                                        if (err) {
+                                            reject(err);
+                                            return;
+                                        }
 
-                                    // Sign the transaction
-                                    issuer.sign(decodedTransaction, 0, redeemScript).then(function (signedTransaction) {
-                                        console.log('Library signed hex string:');
-                                        console.log(signedTransaction.toString('hex'));
+                                        console.log('Decoded transaction:');
+                                        console.log(JSON.stringify(decodedTransaction));
                                         console.log('----');
 
-                                        // Send the transaction to the network
-                                        multichain.sendRawTransaction({
-                                            'hexstring': signedTransaction.toString('hex')
-                                        }, function (err, txid) {
-                                            if (err) {
-                                                reject(err);
-                                                return;
-                                            }
+                                        var redeemScript = inputs[0].redeemScript; // can't generate this
 
-                                            console.log('Broadcasted txid', txid);
-                                            console.log('----');
+                                        // Sign the transaction
+                                        var i = 0, signedTransaction = Promise.resolve(clone(decodedTransaction));
 
-                                            // Check for confirmations
-                                            var confirmedPromise = function isConfirmed() {
+                                        for (; i < inputs.length; i++) {
+                                            (function(index) {
+                                                signedTransaction = signedTransaction.then(function(signedTransaction) {
+                                                    console.log('Signing input: ' + index);
 
-                                                return new Promise(function(fulfill, reject) {
-                                                    multichain.getAsseTtransaction({'asset': assetName, 'txid': txid}, function(err, info) {
-                                                        if (err) {
-                                                            reject(err);
-                                                            return;
-                                                        }
+                                                    return issuer.sign(decodedTransaction, index, inputs[index].redeemScript, false).then(function(currentIndexSignedTransaction) {
+                                                        signedTransaction.vin[index].script = currentIndexSignedTransaction.vin[index].script
 
-                                                        if (info.confirmations < 1) {
-                                                            console.error('number of confirmations: ' + info.confirmations);
-
-                                                            setTimeout(function() {
-                                                                isConfirmed().then(fulfill, reject);
-                                                            }, 1000);
-
-                                                            return;
-                                                        }
-
-                                                        fulfill(info)
+                                                        return signedTransaction
                                                     });
                                                 });
-                                            }();
+                                            })(i);
+                                        }
 
-                                            confirmedPromise.then(fulfill, reject);
+                                        signedTransaction.then(function (signedTransaction) {
+                                            var signedTransactionBuffer = issuer.toBuffer(signedTransaction);
+
+                                            console.log('----');
+                                            console.log('Library signed hex string:');
+                                            console.log(signedTransactionBuffer.toString('hex'));
+                                            console.log('----');
+
+                                            // Send the transaction to the network
+                                            multichain.sendRawTransaction({
+                                                'hexstring': signedTransactionBuffer.toString('hex')
+                                            }, function (err, txid) {
+                                                if (err) {
+                                                    reject(err);
+                                                    return;
+                                                }
+
+                                                console.log('Broadcasted txid', txid);
+                                                console.log('----');
+
+                                                // Check for confirmations
+                                                var confirmedPromise = function isConfirmed() {
+
+                                                    return new Promise(function(fulfill, reject) {
+                                                        multichain.getAsseTtransaction({'asset': assetName, 'txid': txid}, function(err, info) {
+                                                            if (err) {
+                                                                reject(err);
+                                                                return;
+                                                            }
+
+                                                            if (info.confirmations < 1) {
+                                                                console.error('number of confirmations: ' + info.confirmations);
+
+                                                                setTimeout(function() {
+                                                                    isConfirmed().then(fulfill, reject);
+                                                                }, 1000);
+
+                                                                return;
+                                                            }
+
+                                                            fulfill(info)
+                                                        });
+                                                    });
+                                                }();
+
+                                                confirmedPromise.then(fulfill, reject);
+                                            });
                                         });
                                     });
                                 });
                             });
-                        });
-                    }).catch(reject);
-
+                        }).catch(reject);
+                    }); 
                 });
             });
         });
     });
 }).then(function(info) {
+    console.log('confirmed transaction:');
     console.log(info);
 }, function(error) {
     console.error(error);
